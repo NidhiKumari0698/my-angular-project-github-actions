@@ -1,0 +1,38 @@
+name: PR Label Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  labelCheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Verify PR labels
+        id: labelCheck
+        run: |
+          requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
+          prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+
+          for label in "${requiredLabels[@]}"; do
+            if [[ $prLabels != *"$label"* ]]; then
+              echo "Required label \"$label\" missing."
+              echo "::set-output name=labelMissing::true"
+              exit 1
+            fi
+          done
+
+      - name: Set PR status
+        if: steps.labelCheck.outputs.labelMissing == 'true'
+        uses: peter-evans/create-or-update-pull-request-status@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          state: "REQUEST_CHANGES"
+          description: "Required labels missing. Please add one of the following labels: bug-fix, breaking-change, feature, documentation."
+

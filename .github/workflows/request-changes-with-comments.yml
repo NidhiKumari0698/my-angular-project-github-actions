@@ -52,6 +52,8 @@ jobs:
 
             await github.issues.createComment(params);
             await github.pulls.update({
-              ...params,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
               state: 'REQUEST_CHANGES'
             });

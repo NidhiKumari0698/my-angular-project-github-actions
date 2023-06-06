@@ -1,10 +1,9 @@
 name: PR Label Check
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
+  push:
+    branches:
+      - develop
 
 jobs:
   labelCheck:

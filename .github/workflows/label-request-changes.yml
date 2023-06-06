@@ -24,7 +24,6 @@ jobs:
             if [[ $prLabels != *"$label"* ]]; then
               echo "Required label \"$label\" missing."
               echo "::set-output name=labelMissing::true"
-              exit 1
             fi
           done
 

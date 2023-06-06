@@ -1,37 +1,37 @@
-name: Mark PR as Changes Requested
+# name: Mark PR as Changes Requested
 
-on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
+# on:
+#   pull_request:
+#     types:
+#       - opened
+#       - synchronize
 
-jobs:
-  markChangesRequested:
-    runs-on: ubuntu-latest
+# jobs:
+#   markChangesRequested:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-      - name: Mark PR as Changes Requested
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          TOKEN=${{ secrets.MY_CUSTOM_TOKEN }}
+#       - name: Mark PR as Changes Requested
+#         run: |
+#           PR_NUMBER=${{ github.event.pull_request.number }}
+#           TOKEN=${{ secrets.MY_CUSTOM_TOKEN }}
 
-          # Set the pull request review state to "CHANGES_REQUESTED"
-          curl -X POST \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Content-Type: application/json" \
-            -d "{\"event\": \"REQUEST_CHANGES\"}" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews"
+#           # Set the pull request review state to "CHANGES_REQUESTED"
+#           curl -X POST \
+#             -H "Authorization: Bearer $TOKEN" \
+#             -H "Accept: application/vnd.github.v3+json" \
+#             -H "Content-Type: application/json" \
+#             -d "{\"event\": \"REQUEST_CHANGES\"}" \
+#             "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews"
 
-          # Add a comment to the pull request
-          changes_requested_message="Changes requested. Please address the feedback."
-          curl -X POST \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Content-Type: application/json" \
-            -d "{\"body\": \"$changes_requested_message\"}" \
-            "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
+#           # Add a comment to the pull request
+#           changes_requested_message="Changes requested. Please address the feedback."
+#           curl -X POST \
+#             -H "Authorization: Bearer $TOKEN" \
+#             -H "Accept: application/vnd.github.v3+json" \
+#             -H "Content-Type: application/json" \
+#             -d "{\"body\": \"$changes_requested_message\"}" \
+#             "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"

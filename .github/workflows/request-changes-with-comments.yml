@@ -1,10 +1,9 @@
 name: PR Label Check
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
+  push:
+    branches:
+      - develop
 
 jobs:
   labelCheck:
@@ -50,6 +49,7 @@ jobs:
               body: requestChangesMessage
             };
             
+            await github.issues.createComment(params);
             await github.pulls.update({
               owner: context.repo.owner,
               repo: context.repo.repo,

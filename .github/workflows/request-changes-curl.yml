@@ -1,0 +1,52 @@
+name: Set PR status and add comment
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  labelCheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Verify PR labels
+        id: labelCheck
+        run: |
+          requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
+          prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+
+          for label in "${requiredLabels[@]}"; do
+            if [[ $prLabels != *"$label"* ]]; then
+              echo "Required label \"$label\" missing."
+              echo "::set-output name=labelMissing::true"
+            fi
+          done
+
+      - name: Set PR state to "REQUEST_CHANGES"
+        if: steps.labelCheck.outputs.labelMissing == 'true'
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          TOKEN=${{ secrets.MY_CUSTOM_TOKEN }}
+
+          request_changes_message="Required labels are missing. Please add one of the following labels: bug-fix, breaking-change, feature, documentation."
+
+          # Update the pull request state to "REQUEST_CHANGES"
+          curl -X PATCH \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Content-Type: application/json" \
+            -d "{\"state\": \"REQUEST_CHANGES\"}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER"
+
+          # Add a comment to the pull request
+          curl -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Content-Type: application/json" \
+            -d "{\"body\": \"$request_changes_message\"}" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"

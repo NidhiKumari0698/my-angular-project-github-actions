@@ -30,7 +30,6 @@ jobs:
           if [ ${#missingLabels[@]} -gt 0 ]; then
             echo "::set-output name=labelMissing::true"
             echo "::set-output name=missingLabels::${missingLabels[@]}"
-            exit 1
           fi
 
       - name: Set PR status and add comment

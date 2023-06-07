@@ -42,7 +42,9 @@ jobs:
             };
             
             await github.issues.createComment({...params,body: requestChangesMessage});
-            await github.pulls.update({
-              ...params,
-              state: 'REQUEST_CHANGES'
-            });
+            curl --location 'https://api.github.com/repos/NidhiKumari0698/my-angular-project-github-actions/pulls/8/reviews' \
+            --header 'Accept: application/vnd.github+json' \
+            --header 'Authorization: Bearer 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' \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            --header 'Content-Type: application/json' \
+            --data '{"body":"This is close to perfect! Please address the suggested inline change.","event":"REQUEST_CHANGES"}'

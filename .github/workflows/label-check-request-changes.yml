@@ -1,0 +1,44 @@
+name: PR Label Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  labelCheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Verify PR labels
+        id: labelCheck
+        run: |
+          requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
+          prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+          for label in "${requiredLabels[@]}"; do
+            if [[ $prLabels == *"$label"* ]]; then
+              echo "::set-output name=labelMatch::true"
+              break;
+            fi
+          done
+
+      - name: Set PR status and add comment
+        if: steps.labelCheck.outputs.labelMatch != 'true'
+        run: |
+          TOKEN=${{ secrets.REVIEWER_TOKEN }}
+          REPO=${{ github.repository }}
+          PULL_NUMBER=${{ github.event.pull_request.number }}
+          OWNER=${{ github.repository_owner }}
+          
+          # Set the pull request review state to "CHANGES_REQUESTED"
+          curl -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer $TOKEN"\
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          -H "Content-Type: application/json" \
+          https://api.github.com/repos/$REPO/pulls/$PULL_NUMBER/reviews \
+         -d '{"body":"Label missing notified","event":"REQUEST_CHANGES"}'

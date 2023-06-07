@@ -19,7 +19,6 @@ jobs:
         run: |
           requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
           prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
-          labelMatch = false;
           for label in "${requiredLabels[@]}"; do
             if [[ $prLabels == *"$label"* ]]; then
               echo "::set-output name=labelMatch::true"
@@ -28,7 +27,7 @@ jobs:
           done
 
       - name: Set PR status and add comment
-        if: steps.labelCheck.outputs.labelMatch == 'false'
+        if: steps.labelCheck.outputs.labelMatch != 'true'
         uses: actions/github-script@v4
         with:
           github-token: ${{ secrets.MY_CUSTOM_TOKEN }}

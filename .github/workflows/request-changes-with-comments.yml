@@ -1,58 +1,58 @@
-name: PR Label Check
+# name: PR Label Check
 
-on:
-  push:
-    branches:
-      - develop
+# on:
+#   push:
+#     branches:
+#       - develop
 
-jobs:
-  labelCheck:
-    runs-on: ubuntu-latest
+# jobs:
+#   labelCheck:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-      - name: Verify PR labels
-        id: labelCheck
-        run: |
-          requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
-          prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
-          missingLabels=()
+#       - name: Verify PR labels
+#         id: labelCheck
+#         run: |
+#           requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
+#           prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+#           missingLabels=()
 
-          for label in "${requiredLabels[@]}"; do
-            if [[ $prLabels != *"$label"* ]]; then
-              missingLabels+=("$label")
-            fi
-          done
+#           for label in "${requiredLabels[@]}"; do
+#             if [[ $prLabels != *"$label"* ]]; then
+#               missingLabels+=("$label")
+#             fi
+#           done
 
-          if [ ${#missingLabels[@]} -gt 0 ]; then
-            echo "::set-output name=labelMissing::true"
-            echo "::set-output name=missingLabels::${missingLabels[@]}"
-          fi
+#           if [ ${#missingLabels[@]} -gt 0 ]; then
+#             echo "::set-output name=labelMissing::true"
+#             echo "::set-output name=missingLabels::${missingLabels[@]}"
+#           fi
 
-      - name: Set PR status and add comment
-        if: steps.labelCheck.outputs.labelMissing == 'true'
-        uses: actions/github-script@v4
-        with:
-          github-token: ${{ secrets.MY_CUSTOM_TOKEN }}
-          script: |
-            const missingLabels = '${{ steps.labelCheck.outputs.missingLabels }}'.split(',');
-            const prNumber = context.payload.pull_request.number;
+#       - name: Set PR status and add comment
+#         if: steps.labelCheck.outputs.labelMissing == 'true'
+#         uses: actions/github-script@v4
+#         with:
+#           github-token: ${{ secrets.MY_CUSTOM_TOKEN }}
+#           script: |
+#             const missingLabels = '${{ steps.labelCheck.outputs.missingLabels }}'.split(',');
+#             const prNumber = context.payload.pull_request.number;
 
-            const requestChangesMessage = `Required labels missing. Please add one of the following labels: ${missingLabels.join(', ')}.`;
+#             const requestChangesMessage = `Required labels missing. Please add one of the following labels: ${missingLabels.join(', ')}.`;
 
-            const params = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: requestChangesMessage
-            };
+#             const params = {
+#               owner: context.repo.owner,
+#               repo: context.repo.repo,
+#               issue_number: prNumber,
+#               body: requestChangesMessage
+#             };
             
-            await github.issues.createComment(params);
-            await github.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              state: 'REQUEST_CHANGES'
-            });
+#             await github.issues.createComment(params);
+#             await github.pulls.update({
+#               owner: context.repo.owner,
+#               repo: context.repo.repo,
+#               pull_number: context.payload.pull_request.number,
+#               state: 'REQUEST_CHANGES'
+#             });

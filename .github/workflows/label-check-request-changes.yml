@@ -1,0 +1,49 @@
+name: PR Label Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  labelCheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Verify PR labels
+        id: labelCheck
+        run: |
+          requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
+          prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+          labelMatch = false;
+          for label in "${requiredLabels[@]}"; do
+            if [[ $prLabels == *"$label"* ]]; then
+              echo "::set-output name=labelMatch::true"
+              break;
+            fi
+          done
+
+      - name: Set PR status and add comment
+        if: steps.labelCheck.outputs.labelMatch == 'false'
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.MY_CUSTOM_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const requestChangesMessage = `Required labels missing. Please add one of the following labels: ("bug-fix" "breaking-change" "feature" "documentation").`;
+
+            const params = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            };
+            
+            await github.issues.createComment({...params,body: requestChangesMessage});
+            await github.pulls.update({
+              ...params,
+              state: 'REQUEST_CHANGES'
+            });

@@ -1,36 +1,38 @@
-# name: PR Label Check
+name: PR Label Check
 
-# on:
-#   pull_request:
-#     types:
-#       - opened
-#       - synchronize
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
 
-# jobs:
-#   labelCheck:
-#     runs-on: ubuntu-latest
+jobs:
+  labelCheck:
+    runs-on: ubuntu-latest
 
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-#       - name: Verify PR labels
-#         id: labelCheck
-#         run: |
-#           labels=("bug-fix" "breaking-change" "feature" "documentation")
-#           prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+      - name: Verify PR labels
+        id: labelCheck
+        run: |
+          labels=("bug-fix" "breaking-change" "feature" "documentation")
+          prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
 
-#           for label in "${labels[@]}"; do
-#             if [[ $prLabels == *"$label"* ]]; then
-#               echo "::set-output name=labelMatch::$label"
-#               break
-#             fi
-#           done
+          for label in "${labels[@]}"; do
+            if [[ $prLabels == *"$label"* ]]; then
+              echo "::set-output name=labelMatch::$label"
+              break
+            fi
+          done
 
-#       - name: PR Label Check
-#         run: |
-#           labelMatch="${{ steps.labelCheck.outputs.labelMatch }}"
-#           if [ -z "$labelMatch" ]; then
-#             echo "Required labels missing. Please add one of the following labels: bug-fix, breaking-change, feature, documentation."
-#             exit 1
-#           fi
+      - name: PR Label Check
+        run: |
+          labelMatch="${{ steps.labelCheck.outputs.labelMatch }}"
+          if [ -z "$labelMatch" ]; then
+            echo "Required labels missing. Please add one of the following labels: bug-fix, breaking-change, feature, documentation."
+            exit 1
+          fi

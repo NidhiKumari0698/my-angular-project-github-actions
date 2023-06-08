@@ -1,0 +1,51 @@
+name: Set PR status and add comment and Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  LabelCheck_Build_Test_Analyse_PR:
+    name: build_test_analyse_PR
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Verify PR labels
+        id: labelCheck
+        run: |
+          requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
+          prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+
+          for label in "${requiredLabels[@]}"; do
+            if [[ $prLabels == *"$label"* ]]; then
+              echo "Required label \"$label\" matched."
+              echo "::set-output name=labelMatch::true"
+              break;
+            fi
+          done
+
+      - name: Set PR state to "REQUEST_CHANGES"
+        if: steps.labelCheck.outputs.labelMatch != 'true'
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          TOKEN=${{ secrets.REVIEWER_TOKEN }}
+          echo "PR NUMBER IS \"$PR_NUMBER\" missing."
+          request_changes_message="PR must have at least one of the required labels: bug-fix, breaking-change, feature, documentation"
+
+          # Update the pull request state to "REQUEST_CHANGES"
+          curl -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Content-Type: application/json" \
+            -d "{\"body\":\"$request_changes_message\",\"event\": \"REQUEST_CHANGES\"}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews"
+          echo "::error::PR must have at least one of the required labels: bug-fix, breaking-change, feature, documentation"
+
+      - name: Build and Test
+        if: steps.labelCheck.outputs.labelMatch == 'true'
+        run: npm install

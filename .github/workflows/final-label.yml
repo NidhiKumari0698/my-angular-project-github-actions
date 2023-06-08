@@ -1,45 +1,45 @@
-name: Set PR status and add comment
+# name: Set PR status and add comment
 
-on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
+# on:
+#   pull_request:
+#     types:
+#       - opened
+#       - synchronize
 
-jobs:
-  labelCheck:
-    runs-on: ubuntu-latest
+# jobs:
+#   labelCheck:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-      - name: Verify PR labels
-        id: labelCheck
-        run: |
-          requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
-          prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+#       - name: Verify PR labels
+#         id: labelCheck
+#         run: |
+#           requiredLabels=("bug-fix" "breaking-change" "feature" "documentation")
+#           prLabels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
 
-          for label in "${requiredLabels[@]}"; do
-            if [[ $prLabels == *"$label"* ]]; then
-              echo "Required label \"$label\" matched."
-              echo "::set-output name=labelMatch::true"
-              break;
-            fi
-          done
+#           for label in "${requiredLabels[@]}"; do
+#             if [[ $prLabels == *"$label"* ]]; then
+#               echo "Required label \"$label\" matched."
+#               echo "::set-output name=labelMatch::true"
+#               break;
+#             fi
+#           done
 
-      - name: Set PR state to "REQUEST_CHANGES"
-        if: steps.labelCheck.outputs.labelMatch != 'true'
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          TOKEN=${{ secrets.REVIEWER_TOKEN }}
-          echo "PR NUMBER IS \"$PR_NUMBER\" missing."
-          request_changes_message="Required labels are missing. Please add one of the following labels: bug-fix, breaking-change, feature, documentation."
+#       - name: Set PR state to "REQUEST_CHANGES"
+#         if: steps.labelCheck.outputs.labelMatch != 'true'
+#         run: |
+#           PR_NUMBER=${{ github.event.pull_request.number }}
+#           TOKEN=${{ secrets.REVIEWER_TOKEN }}
+#           echo "PR NUMBER IS \"$PR_NUMBER\" missing."
+#           request_changes_message="Required labels are missing. Please add one of the following labels: bug-fix, breaking-change, feature, documentation."
 
-          # Update the pull request state to "REQUEST_CHANGES"
-          curl -X POST \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Content-Type: application/json" \
-            -d "{\"body\":\"$request_changes_message\",\"event\": \"REQUEST_CHANGES\"}" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews"
+#           # Update the pull request state to "REQUEST_CHANGES"
+#           curl -X POST \
+#             -H "Authorization: Bearer $TOKEN" \
+#             -H "Accept: application/vnd.github.v3+json" \
+#             -H "Content-Type: application/json" \
+#             -d "{\"body\":\"$request_changes_message\",\"event\": \"REQUEST_CHANGES\"}" \
+#             "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews"
